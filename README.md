@@ -175,10 +175,10 @@ sudo ./engine start c1 ./rootfs-alpha /bin/sh
 sudo ./engine start c2 ./rootfs-beta /bin/sh
 ```
 
-![Check if the image is in Output Directory](\Code\Outputs\image.png)
+![Check if the image is in Output Directory](./Code/Outputs/image.png)
 
 Supervisor Output:
-![alt text](\Code\Outputs\image-1.png)
+![alt text](./Code/Outputs/image-1.png)
 
 *Two containers (alpha, beta) launched under a single supervisor process. Supervisor shows host PIDs for both.*
 
@@ -200,7 +200,7 @@ beta              12346     running             40         64         10      14
 ```
 
 Output:
-![alt text](\Code\Outputs\image-2.png)
+![alt text](./Code/Outputs/image-2.png)
 
 *`engine ps` showing both containers with state, memory limits, nice value, and start time.*
 
@@ -212,7 +212,7 @@ Output:
 sudo ./engine logs alpha
 cat logs/alpha.log
 ```
-![alt text](\Code\Outputs\image-3.png)
+![alt text](./Code/Outputs/image-3.png)
 
 ---
 
@@ -244,7 +244,7 @@ Expected `dmesg` output:
 [container_monitor] SOFT LIMIT container=mem pid=XXXX rss=21XXXXXX limit=20971520
 ```
 
-![alt text](\Code\Outputs\image-4.png)
+![alt text](./Code/Outputs/image-4.png)
 
 *Second Last Line shows the code crossing SOFT LIMIT. Kernel module emits SOFT LIMIT warning when container `mem` exceeds 20 MiB RSS. Warning appears exactly once.*
 
@@ -272,7 +272,7 @@ Expected `dmesg`:
 ```
 
 
-![alt text](\Code\Outputs\image-5.png)
+![alt text](./Code/Outputs/image-5.png)
 
 *Kernel module sends SIGKILL when container exceeds 40 MiB hard limit. Supervisor classifies exit as `hard_limit_killed` (SIGKILL with no `stop_requested`).*
 
@@ -292,7 +292,7 @@ sudo ./engine logs hi | tail -8
 sudo ./engine logs lo | tail -8
 ```
 
-![alt text](\Code\Outputs\image-6.png)
+![alt text](./Code/Outputs/image-6.png)
 
 *Accumulator of `hi` Container `hi` (nice=-5, higher priority) completes more CPU iterations per second than `lo` (nice=15). CFS weight difference of ~40:1 causes clearly unequal CPU share.*
 
@@ -314,7 +314,7 @@ Expected supervisor output:
 ```
 
 Output:
-![alt text](\Code\Outputs\image-7.png)
+![alt text](./Code/Outputs/image-7.png)
 Supervisor Process has been Killed
 
 ```bash
@@ -327,7 +327,7 @@ dmesg | tail -3
 ```
 
 Output:
-![alt text](\Code\Outputs\image-8.png)
+![alt text](./Code/Outputs/image-8.png)
 
 
 
