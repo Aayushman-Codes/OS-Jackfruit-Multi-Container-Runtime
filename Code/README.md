@@ -1,10 +1,20 @@
 # Multi-Container Runtime — Project Submission
 
-> **Team Information**
-> - Student 1: [Your Name] — SRN: [XXXXXXXX]
-> - Student 2: [Partner Name] — SRN: [XXXXXXXX]
+# **Team Information**
+>## - Student 1: [Aayushman Singh] — SRN: [PES1UG24AM006]
+>## - Student 2: [Akshit Singhal] — SRN: [PES1UG24AM027]
 
 ---
+
+#Project Summary
+##This project implements a lightweight Linux container runtime in C with:
+
+- A user-space supervisor to manage multiple containers
+- A kernel module to monitor and enforce memory limits
+- A logging system using a bounded buffer and pipes
+- A CLI interface for container lifecycle management
+- Scheduling experiments demonstrating Linux CPU scheduling behavior
+
 
 ## Table of Contents
 1. [Build, Load, and Run Instructions](#build-load-and-run-instructions)
@@ -34,6 +44,7 @@ chmod +x environment-check.sh
 sudo ./environment-check.sh
 ```
 
+This installs the required libraries and prepares the environment for the execution of the codes.
 Fix any issues reported before continuing.
 
 ### Step 2 — Build Everything
@@ -92,19 +103,32 @@ The supervisor runs in the foreground printing status messages. Open new termina
 
 ```bash
 # Start containers in background
+sudo ./engine start c1 ./rootfs-alpha /bin/sh
+sudo ./engine start c2 ./rootfs-beta /bin/sh
+```
+Or Alterbatively you can run:
+```bash
 sudo ./engine start alpha ./rootfs-alpha "/cpu_hog 20"
 sudo ./engine start beta  ./rootfs-beta  "/cpu_hog 20" --nice 10
+```
 
-# List containers
+List containers
+```bash
 sudo ./engine ps
+```
 
-# View logs
+View logs
+```bash
 sudo ./engine logs alpha
+```
 
-# Run a container in the foreground (blocks until it exits)
+Run a container in the foreground (blocks until it exits)
+```bash
 sudo ./engine run mem ./rootfs-gamma "/memory_hog 4 500" --soft-mib 20 --hard-mib 40
+```
 
-# Stop a container
+Stop a container
+```bash
 sudo ./engine stop alpha
 ```
 
