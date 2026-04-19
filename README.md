@@ -339,6 +339,7 @@ Output:
 
 ### Test Case 1 — Basic Container Launch and Lifecycle
 
+
 **Steps:**
 ```bash
 sudo ./engine start alpha ./rootfs-alpha "/cpu_hog 10"
@@ -351,12 +352,13 @@ sudo ./engine ps   # alpha should now show state=exited
 ```
 CONTAINER_ID  PID    STATE    SOFT_MiB  HARD_MiB  NICE  STARTED
 alpha         XXXXX  running  40        64        0     HH:MM:SS
-```
+``
 
 **Expected output (ps after exit):**
 ```
 alpha         XXXXX  exited   40        64        0     HH:MM:SS  (exit=0)
 ```
+![alt text](./Code/Outputs/image-9.png)
 
 **Pass criteria:** Container launched, runs, exits cleanly, state shown as `exited`.
 
@@ -371,7 +373,8 @@ sudo ./engine start beta  ./rootfs-beta  "/cpu_hog 20"
 sudo ./engine ps
 ```
 
-**Expected:** Both containers appear in `ps` output with state `running`, distinct PIDs.
+![alt text](./Code/Outputs/image-10.png)
+Both containers appear in `ps` output with state `running`, distinct PIDs.
 
 ---
 
@@ -390,6 +393,7 @@ sudo ./engine ps
 alpha   XXXXX   stopped   40   64   0   HH:MM:SS  (sig=15)
 ```
 
+![alt text](./Code/Outputs/image-11.png)
 State is `stopped` (not `killed` or `hard_limit_killed`) because `stop_requested` was set before the signal.
 
 ---
@@ -403,6 +407,7 @@ time sudo ./engine run gamma ./rootfs-gamma "/cpu_hog 5"
 
 **Expected:** Command blocks for ~5 seconds, then prints exit code. `time` confirms ~5s wall time.
 
+![alt text](./Code/Outputs/image-12.png)
 ---
 
 ### Test Case 5 — Soft Limit Warning
@@ -418,7 +423,7 @@ dmesg | grep "SOFT LIMIT"
 ```
 [container_monitor] SOFT LIMIT container=mem pid=XXXX rss=21XXXXXX limit=20971520
 ```
-
+![alt text](./Code/Outputs/image-13.png)
 Warning appears **exactly once** (soft_warned flag prevents repeat).
 
 ---
@@ -435,6 +440,7 @@ dmesg | grep -E "SOFT|HARD" | tail -5
 
 **Expected:** Container killed by SIGKILL, state = `hard_limit_killed`, dmesg shows both SOFT and HARD events.
 
+![alt text](./Code/Outputs/image-14.png)
 ---
 
 ### Test Case 7 — Log Capture
@@ -452,7 +458,7 @@ cpu_hog alive elapsed=1 accumulator=XXXXXXXXXX
 cpu_hog alive elapsed=2 accumulator=XXXXXXXXXX
 ...
 ```
-
+![alt text](./Code/Outputs/image-15.png)
 ---
 
 ### Test Case 8 — Scheduling Experiment (nice values)
@@ -466,7 +472,9 @@ sudo ./engine logs hi | wc -l
 sudo ./engine logs lo | wc -l
 ```
 
-**Expected:** `hi` log has more lines (more CPU iterations completed) than `lo` log, demonstrating CFS weight difference.
+![alt text](./Code/Outputs/image-16.png)
+`hi` log has more lines (more CPU iterations completed) than `lo` log, demonstrating CFS weight difference.
+
 
 ---
 
@@ -479,7 +487,8 @@ sleep 8
 ps aux | grep "Z\|defunct" | grep -v grep
 ```
 
-**Expected:** No zombie processes. All children reaped by `SIGCHLD` handler.
+![alt text](./Code/Outputs/image-17.png)
+No zombie processes. All children reaped by `SIGCHLD` handler.
 
 ---
 
@@ -494,7 +503,7 @@ sudo ./engine start bad ./rootfs-alpha "/cpu_hog 10" --soft-mib 60 --hard-mib 40
 ```
 
 **Expected:** Appropriate error messages for each case, no crash.
-
+![alt text](./Code/Outputs/image-18.png)
 ---
 
 ## Engineering Analysis
@@ -617,51 +626,3 @@ Linux's **Completely Fair Scheduler (CFS)** tracks `vruntime` (virtual runtime) 
 **Justification:** `nice` is the simplest standard mechanism and directly exercises CFS weight-based scheduling as taught in the course.
 
 ---
-
-## Scheduler Experiment Results
-
-### Experiment 1 — CPU-Bound Containers with Different nice Values
-
-**Setup:**
-```bash
-cp -a rootfs-base rootfs-hi && cp -a rootfs-base rootfs-lo
-sudo ./engine start hi ./rootfs-hi "/cpu_hog 20" --nice -5
-sudo ./engine start lo ./rootfs-lo "/cpu_hog 20" --nice 15
-sleep 22
-sudo ./engine logs hi | tail -5
-sudo ./engine logs lo | tail -5
-```
-
-**Replace this table with your actual measured output:**
-
-| Container | nice | Duration (s) | Lines logged (progress reports) | Observations |
-|---|---|---|---|---|
-| `hi` | -5 | 20 | ~20 (1/sec) | Higher CPU share; progresses at near-full speed |
-| `lo` | 15 | 20 | ~20 (1/sec) | Much lower CPU share; accumulator grows slowly |
-
-**Analysis:** CFS allocates CPU proportional to task weight. The weight of nice -5 is ~335; nice +15 is ~15. Ratio ≈ 22:1. On a single core, `hi` received roughly 95% of CPU time and `lo` only 5%. Both containers ran for the same wall-clock 20 seconds, but `hi`'s `accumulator` value grew ~22× faster, demonstrating CFS weight-based fairness. On a dual-core VM, both got at least one core each, reducing the observable difference — this illustrates how CPU topology interacts with the scheduler.
-
----
-
-### Experiment 2 — CPU-Bound vs I/O-Bound at Equal Priority
-
-**Setup:**
-```bash
-cp -a rootfs-base rootfs-cpu && cp -a rootfs-base rootfs-io
-sudo ./engine start cpu_c ./rootfs-cpu "/cpu_hog 20"
-sudo ./engine start io_c  ./rootfs-io  "/io_pulse 40 200"
-sleep 22
-sudo ./engine logs cpu_c | wc -l
-sudo ./engine logs io_c  | wc -l
-```
-
-**Expected observation:** `cpu_c` progresses at full speed because `io_c` is sleeping most of the time (200ms between I/O bursts). CFS gives `io_c` a "catch-up" time slice when it wakes (its `vruntime` is behind), so it gets responsive scheduling, but `cpu_c` is barely affected because `io_c` voluntarily yields.
-
-**Replace this table with your actual measured output:**
-
-| Container | Workload | CPU utilisation (approx) | Observations |
-|---|---|---|---|
-| `cpu_c` | CPU-bound | ~95–100% | Barely impacted by co-running I/O process |
-| `io_c` | I/O-bound | ~5–10% | Short bursts; mostly sleeping; responsive |
-
-**Analysis:** This demonstrates CFS's responsiveness goal — I/O-bound tasks are not penalised for sleeping. Their `vruntime` does not advance while asleep, so they receive immediate CPU time when they wake up, achieving low latency without starving CPU-bound peers.
