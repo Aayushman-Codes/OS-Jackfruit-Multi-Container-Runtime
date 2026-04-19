@@ -22,7 +22,6 @@
 3. [Test Cases and Expected Outputs](#test-cases-and-expected-outputs)
 4. [Engineering Analysis](#engineering-analysis)
 5. [Design Decisions and Tradeoffs](#design-decisions-and-tradeoffs)
-6. [Scheduler Experiment Results](#scheduler-experiment-results)
 
 ---
 
@@ -594,7 +593,6 @@ Linux's **Completely Fair Scheduler (CFS)** tracks `vruntime` (virtual runtime) 
 
 **I/O-bound vs CPU-bound behavior:** An I/O-bound container (e.g., `io_pulse`) voluntarily yields the CPU on each `fsync + usleep`. CFS boosts its `vruntime` as if it had been running, but it is usually sleeping. When it wakes, CFS gives it a fresh time slice because its `vruntime` is behind the CPU-bound container's. This is CFS's built-in responsiveness mechanism — sleepers get "catch-up" scheduling.
 
-**Experiment results** are presented in the [Scheduler Experiment Results](#scheduler-experiment-results) section below.
 
 ---
 
